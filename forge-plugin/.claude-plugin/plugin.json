@@ -1,0 +1,12 @@
+{
+  "name": "forge",
+  "version": "0.1.0",
+  "description": "Get more out of Claude Code without needing to be an expert. Forge audits your CLAUDE.md, suggests agents tailored to your project, and walks you through setup conversationally.",
+  "author": {
+    "name": "Lab_401",
+    "url": "https://lab401.ai"
+  },
+  "homepage": "https://forge.lab401.ai",
+  "keywords": ["claude-md", "setup", "audit", "agents", "consult", "lint"],
+  "license": "MIT"
+}

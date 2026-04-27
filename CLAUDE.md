@@ -2,28 +2,56 @@
 
 ## What Forge_ is
 
-Forge_ is a developer tool that ensures your AI framework is optimized to deliver your vision. It's both a setup guide and an ongoing reference — not something you use once and forget, but a workspace you return to as your project evolves.
+Forge_ helps anyone using Claude Code get more out of it — without needing to know what they're doing. It guides you through the setup, analyzes your project, and tells you what to add or change so your AI actually works the way you intended.
 
-The core promise: **you have the vision for your build, Forge_ ensures your AI delivers it.**
+The core promise: **you have the vision, Forge_ makes sure your AI delivers it.**
 
-Target audience is any developer using Claude Code — from first-timers who need clear setup steps to experienced devs fine-tuning their AI workflow.
+The people using this aren't necessarily engineers. They might be designers, founders, marketers, or hobbyists who picked up Claude Code and are figuring it out as they go. The app should never make them feel like they're missing context.
+
+## Two products, one brand
+
+Forge_ is becoming two complementary tools that serve the same user at different moments:
+
+**The web app** (what's built) — forge.lab401.ai. You open it in a browser, describe what you're building, and Forge analyzes your project and gives you personalized recommendations. It's where you go to set things up, understand your options, and get a starting point. Visual, guided, and approachable.
+
+**The CLI plugin** (what's next) — lives inside Claude Code itself. Once you're working on a project, you call `/forge:lint` or `/forge:consult` without ever leaving the terminal. It reads your actual project files and tells you what's off, what's missing, and what to do next. No browser, no copy-pasting.
+
+These aren't competing products. The web app is for getting started. The plugin is for staying sharp as the project grows.
+
+## Where Forge wins (the actual wedge)
+
+Several tools already lint or scaffold CLAUDE.md files. Forge's defensible ground is the combination of things none of them do:
+
+- **CLAUDE.local.md curation** — the personal, uncommitted layer of Claude Code setup. Nobody handles this. It's where user-specific tokens, notes, and machine paths should live, and there's no guidance for it anywhere.
+- **Codebase-aware suggestions** — not templates. Forge scans what you've actually built and says "given your stack, here are the 4 agents that would save you the most time." That's a different class of recommendation.
+- **Conversational refinement** — other tools return pass/fail. Forge walks you through it. Explaining why something matters before telling you to change it.
+- **Living rules** — Claude Code updates frequently. Forge's recommendations should pull from current documentation, not hardcoded rules that go stale.
 
 ## Current state
 
-The app works but needs a structural overhaul. The current build mixes best practices with project-specific customizations in a way that feels unorganized. The next phase should focus on clean separation and intuitive navigation.
+The web app is roughly 70% complete. The core flow works. The next phase is structural cleanup and the beginning of the plugin work.
 
 ### What exists now
 - Single-page React app with three-panel layout: sidebar nav, main content, AI chat
-- 10 sidebar sections mixing setup steps, reference material, and project analysis
-- Interactive 9-step initialization checklist with localStorage persistence
-- Project analysis: users describe their project or upload files, Claude analyzes and generates tailored recommendations per section
-- AI chat panel powered by Anthropic API (Sonnet) for real-time Q&A
+- 10 sidebar sections covering setup steps, reference material, and project analysis
+- Interactive 9-step initialization checklist (persisted across sessions)
+- Project analysis: describe your project or upload files → Claude generates tailored recommendations per section
+- AI chat panel powered by Anthropic API for real-time Q&A
 - Ember orange accent color (#e0663c), dark theme, monospace typography
 
 ### What needs to change
-- **Clean separation between guide content and project customization.** Best practices / reference material should feel distinct from personalized recommendations. Right now they're interleaved.
-- **Clearer navigation hierarchy.** 10 flat sidebar items is too many to scan quickly. Group or layer them so the user always knows where they are and what to do next.
-- **Progressive flow.** A first-time user should feel guided through a logical sequence. A returning user should be able to jump straight to any section.
+- **Separate guide content from personalized recommendations.** Right now they're mixed together in a way that's hard to scan. Best practices should feel like reference material; your specific recommendations should feel like a personal briefing.
+- **Simplify navigation.** 10 flat sidebar items is too many. Group or layer them so the user always knows where they are and what's next.
+- **Progressive flow for new users.** Someone opening Forge for the first time should feel guided. A returning user should be able to jump straight to what they need.
+
+## Tone and communication
+
+When Forge talks to users — in the UI, in recommendations, in the chat — it should sound like a knowledgeable friend explaining something over coffee, not a developer writing documentation.
+
+- Use plain words. "Your setup file" not "your CLAUDE.md." "AI assistant" not "LLM." Introduce jargon only when necessary, and explain it when you do.
+- Lead with what it means for the user, not what the thing is. "This tells Claude how to behave in your project" before "this is the CLAUDE.md file."
+- Keep it short. If something can be said in one sentence, don't use three.
+- Never assume the user knows what something is just because it's obvious to a developer.
 
 ## Tech stack
 
@@ -54,6 +82,24 @@ public/            # Static assets
 .env               # VITE_ANTHROPIC_API_KEY (gitignored)
 ```
 
+## What this repo also contains
+
+The `forge-plugin/` directory is the CLI plugin half of Forge_. It ships three skills:
+
+- `forge-plugin/skills/lint/` — audits a project's CLAUDE.md (`/forge:lint`)
+- `forge-plugin/skills/analyze/` — generates tailored Claude Code setup recommendations (`/forge:analyze`)
+- `forge-plugin/skills/consult/` — interactive Q&A grounded in the current project (`/forge:consult`)
+
+When working on plugin behavior, edit the relevant `SKILL.md`. Bundled grounding schema lives in `forge-plugin/schema/`. The plugin manifest is at `forge-plugin/.claude-plugin/plugin.json`.
+
+## What NOT to do
+
+- Don't add Tailwind, CSS-in-JS, or any styling library — vanilla CSS with `--fg-*` custom properties is the convention.
+- Don't migrate to TypeScript without asking. The project is intentionally JS.
+- Don't refactor `src/Forge.jsx` into smaller components as part of an unrelated task. It's a known ~950-line monolith and breaking it up is its own scoped piece of work.
+- Don't hardcode the Anthropic model ID in new code without checking the current one (currently `claude-sonnet-4-6`).
+- Don't conflate the web app and the plugin. They share a repo but ship independently — changes to `src/` don't touch `forge-plugin/` and vice versa.
+
 ## Conventions
 
 ### Styling
@@ -70,14 +116,14 @@ public/            # Static assets
 ### API calls
 - All Anthropic API calls use `import.meta.env.VITE_ANTHROPIC_API_KEY`
 - Two API integration points: project analysis (structured JSON response) and chat (conversational)
-- Model: `claude-sonnet-4-20250514` for both
+- Model: `claude-sonnet-4-6` for both
 
 ## Design principles
 
 - **Clarity over cleverness.** Every screen should be immediately scannable. No hidden menus, no mystery icons.
 - **Guide first, reference second.** New users follow a path. Experienced users browse freely. Both work without friction.
-- **Personalization earns trust.** Recommendations should feel specific and useful, never generic. If the analysis can't add value to a section, show nothing rather than filler.
-- **Respect the developer.** Terse, practical language. No marketing fluff. Code examples should be copy-paste ready.
+- **Personalization earns trust.** Recommendations should feel specific and useful, never generic. If the analysis can't add real value to a section, show nothing rather than filler.
+- **Meet the user where they are.** The target user may not know what an agent, a hook, or a subagent is. That's fine. Forge explains it in context, without condescending.
 
 ## Deployment
 
