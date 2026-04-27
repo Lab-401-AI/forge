@@ -82,6 +82,10 @@ public/            # Static assets
 .env               # VITE_ANTHROPIC_API_KEY (gitignored)
 ```
 
+Key prompt locations inside `src/Forge.jsx` (do not move without updating references in plugin skills):
+- `ANALYSIS_PROMPT` — lines 29–46. Drives the project analysis API call; defines the JSON shape the app expects back.
+- `MODES` object — lines 48–115. Three system prompts: `claude-code` (expert consult), `architect` (design review), `rubber-duck` (thinking partner). The consult skill pulls from `claude-code`.
+
 ## What this repo also contains
 
 The `forge-plugin/` directory is the CLI plugin half of Forge_. It ships three skills:
@@ -90,7 +94,12 @@ The `forge-plugin/` directory is the CLI plugin half of Forge_. It ships three s
 - `forge-plugin/skills/analyze/` — generates tailored Claude Code setup recommendations (`/forge:analyze`)
 - `forge-plugin/skills/consult/` — interactive Q&A grounded in the current project (`/forge:consult`)
 
-When working on plugin behavior, edit the relevant `SKILL.md`. Bundled grounding schema lives in `forge-plugin/schema/`. The plugin manifest is at `forge-plugin/.claude-plugin/plugin.json`.
+When working on plugin behavior, edit the relevant `SKILL.md`. The plugin manifest is at `forge-plugin/.claude-plugin/plugin.json`.
+
+Bundled grounding schema in `forge-plugin/schema/`:
+- `claude-md.md` — Layer 1 deterministic rules (required sections, file size, anti-patterns). Used by `/forge:lint` offline, no credits.
+- `canonical-urls.md` — Layer 2 fetch targets (Anthropic docs pages). Skills fetch these at runtime for always-current guidance.
+- `community-corpus.md` — Layer 3 real-world examples (public agent repos). Used for suggestion quality, cited by name, never as authority.
 
 ## What NOT to do
 
@@ -117,6 +126,7 @@ When working on plugin behavior, edit the relevant `SKILL.md`. Bundled grounding
 - All Anthropic API calls use `import.meta.env.VITE_ANTHROPIC_API_KEY`
 - Two API integration points: project analysis (structured JSON response) and chat (conversational)
 - Model: `claude-sonnet-4-6` for both
+- **Model drift risk:** both call sites must stay in sync. If you update the model string in one place, grep for the other before committing. The `anthropic-fetch-reviewer` subagent checks this automatically.
 
 ## Design principles
 
