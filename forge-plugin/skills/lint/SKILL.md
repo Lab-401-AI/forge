@@ -85,6 +85,35 @@ This step checks for what shouldn't be there — stale references, dead links, b
 - Grep CLAUDE.local.md for patterns: `sk-`, `api_key`, `API_KEY`, `token =`, `secret`, `password`.
 - Even though CLAUDE.local.md is gitignored, credentials here would be exposed to Claude in every session. Flag any hit.
 
+## Step 2c — Agent description quality audit
+
+Subagents are only useful if Claude actually invokes them. The trigger is the agent's `description` field. A vague description means the agent never fires regardless of how good the body is.
+
+**Skip this step if `.claude/agents/` is empty.**
+
+1. `Read` `${CLAUDE_PLUGIN_ROOT}/schema/agent-description-rubric.md`. This is Forge's deterministic rubric — four signals (trigger condition, scope, outcome named, read-only declared when applicable).
+2. For each `.md` file in `.claude/agents/` (from Step 1's Glob), `Read` the file and extract the `description:` line from frontmatter.
+3. Score each description against the four signals. Note which signals are present and which are missing.
+4. Translate the score to a verdict: **Strong** (4/4 or 3/3), **Acceptable** (3/4), **Weak** (2/4), **Will not trigger** (0–1/4).
+5. For weak/will-not-trigger agents, also note which named failure pattern they hit if any (buzzword sandwich, job title, truism, novel).
+
+This audit produces material for the "Agent quality" section in the output. Strong agents get a one-line confirmation. Weak agents get a rewrite recommendation with a concrete proposed description.
+
+## Step 2d — Path-routing recommendation
+
+Some bloat in CLAUDE.md isn't fixable by deletion — the content is genuinely needed, just not on every turn. The fix is moving section-specific content into lazy-loaded mechanisms (subdirectory CLAUDE.md files or `.claude/rules/` with `paths:` frontmatter).
+
+1. `Read` `${CLAUDE_PLUGIN_ROOT}/schema/path-scoped-rules.md`. This defines when to recommend a split and how.
+2. Apply the trigger criteria from that schema to the user's CLAUDE.md and project layout. The recommendation should fire if **any two** of these are true:
+   - CLAUDE.md is over 600 words.
+   - CLAUDE.md has clearly separable concern domains (frontend vs. backend, app vs. plugin, multiple stacks).
+   - The project has multiple top-level subdirectories with different stacks.
+   - There's a clear "this section is irrelevant when working on X" boundary in the file.
+3. If the trigger fires, identify the **specific sections** in the user's CLAUDE.md that should move, name the right mechanism (subdirectory CLAUDE.md vs. `.claude/rules/`), and produce paste-ready content for the new file including `paths:` frontmatter when relevant.
+4. Estimate the resulting root CLAUDE.md size.
+
+If the trigger does not fire (small file, single concern domain), skip this step entirely — do not invent a reason to recommend a split.
+
 ## Step 3 — Pull live guidance (Layer 2)
 
 `Read` `${CLAUDE_PLUGIN_ROOT}/schema/canonical-urls.md` to see which URLs are relevant.
@@ -136,6 +165,18 @@ Write the report in this exact shape, in plain language:
 - **Context budget:** Your setup file is <N> words. <Specific advice on what to cut if over 600.>
 - **CLAUDE.local.md — <issue type>:** <plain-language explanation. For credential exposure, be direct about the risk.>
 
+## Agent quality 🎯
+<Skip this section entirely if .claude/agents/ is empty or all agents scored Strong. Only print findings.>
+- **`<agent-name>`** — <Strong | Acceptable | Weak | Will not trigger>. <If not Strong: which signals are missing, and a one-line proposed rewrite of the description that hits all four signals.>
+- <For each weak/dead-weight agent, name the failure pattern from the rubric if applicable: "buzzword sandwich", "job title", "truism", "novel".>
+
+## Restructure recommendation 🪜
+<Skip this section entirely if the path-routing trigger from Step 2d did not fire. Do not manufacture a recommendation.>
+- **What's bloating the root file:** <name the specific sections from the user's CLAUDE.md by heading and line range — e.g., "Conventions > Styling (lines 105–109)".>
+- **Where each section should move:** <subdirectory CLAUDE.md or `.claude/rules/<name>.md` with `paths:` frontmatter. Be specific about the path pattern.>
+- **Paste-ready new file:** <full content for the new file including frontmatter, ready to drop in.>
+- **Expected impact:** Root CLAUDE.md drops from <N> to ~<M> words. <One-sentence note on what Claude no longer carries during unrelated work.>
+
 ## Suggested next step
 <One concrete action. Not "improve your CLAUDE.md." Something like: "Add a 'Commands' section with these three lines: ..." — give them the exact text to paste. If the biggest problem is noise, tell them exactly which line to delete and why.>
 
@@ -143,6 +184,8 @@ Write the report in this exact shape, in plain language:
 **How this lint was grounded:**
 - Bundled schema: ${CLAUDE_PLUGIN_ROOT}/schema/claude-md.md (read)
 - Noise checks: ghost agents, orphaned agents, stale paths, placeholder rot, context budget, CLAUDE.local.md
+- Agent description rubric: ${CLAUDE_PLUGIN_ROOT}/schema/agent-description-rubric.md (<applied to N agents | skipped — no agents on disk>)
+- Path-routing schema: ${CLAUDE_PLUGIN_ROOT}/schema/path-scoped-rules.md (<trigger fired | trigger did not fire>)
 - Live docs fetched: <URL or "none — fetch failed">
 - Project files inspected: <list>
 ```
