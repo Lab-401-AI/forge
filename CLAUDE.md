@@ -88,18 +88,7 @@ Key prompt locations inside `src/Forge.jsx` (do not move without updating refere
 
 ## What this repo also contains
 
-The `forge-plugin/` directory is the CLI plugin half of Forge_. It ships three skills:
-
-- `forge-plugin/skills/lint/` — audits a project's CLAUDE.md (`/forge:lint`)
-- `forge-plugin/skills/analyze/` — generates tailored Claude Code setup recommendations (`/forge:analyze`)
-- `forge-plugin/skills/consult/` — interactive Q&A grounded in the current project (`/forge:consult`)
-
-When working on plugin behavior, edit the relevant `SKILL.md`. The plugin manifest is at `forge-plugin/.claude-plugin/plugin.json`.
-
-Bundled grounding schema in `forge-plugin/schema/`:
-- `claude-md.md` — Layer 1 deterministic rules (required sections, file size, anti-patterns). Used by `/forge:lint` offline, no credits.
-- `canonical-urls.md` — Layer 2 fetch targets (Anthropic docs pages). Skills fetch these at runtime for always-current guidance.
-- `community-corpus.md` — Layer 3 real-world examples (public agent repos). Used for suggestion quality, cited by name, never as authority.
+The `forge-plugin/` directory is the CLI plugin half of Forge_, with its own conventions in `forge-plugin/CLAUDE.md` (loaded on demand when Claude works on plugin files). The web app's per-directory conventions live in `src/CLAUDE.md`.
 
 ## Agents
 
@@ -120,16 +109,7 @@ Four specialized subagents live in `.claude/agents/`. Use them proactively:
 
 ## Conventions
 
-### Styling
-- All CSS custom properties prefixed with `--fg-` to namespace away from any parent site
-- Dark theme only: `--fg-bg: #0f0f0f`, accent: `--fg-accent: #e0663c`
-- BEM-like class naming: `forge-component`, `forge-component--modifier`, `forge-component-element`
-- Two font stacks: `--fg-mono` (SF Mono/Menlo) for code, `--fg-sans` (system) for body
-
-### Component patterns
-- Currently a single monolithic component — should be broken into smaller components as the app matures
-- `useCallback` for all handlers to prevent unnecessary re-renders
-- localStorage keys prefixed with `forge_` (e.g., `forge_completed`, `forge_project_desc`, `forge_recommendations`)
+Per-directory conventions (styling, component patterns) live in `src/CLAUDE.md` and load only when Claude works in `src/`. Plugin conventions live in `forge-plugin/CLAUDE.md`. The cross-cutting rule below applies project-wide.
 
 ### API calls
 - All Anthropic API calls use `import.meta.env.VITE_ANTHROPIC_API_KEY`
@@ -148,7 +128,7 @@ Four specialized subagents live in `.claude/agents/`. Use them proactively:
 
 - **Parent site:** lab401.ai (separate repo: lab401-web)
 - **Apps page tile** on lab401.ai links to Forge_ at `https://forge.lab401.ai`
-- Deployment pipeline TBD — will likely mirror lab401-web (S3 + CloudFront)
+- **Pipeline:** S3 + CloudFront, mirroring lab401-web
 
 ## Related
 
