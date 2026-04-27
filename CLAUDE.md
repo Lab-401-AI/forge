@@ -101,6 +101,15 @@ Bundled grounding schema in `forge-plugin/schema/`:
 - `canonical-urls.md` — Layer 2 fetch targets (Anthropic docs pages). Skills fetch these at runtime for always-current guidance.
 - `community-corpus.md` — Layer 3 real-world examples (public agent repos). Used for suggestion quality, cited by name, never as authority.
 
+## Agents
+
+Four specialized subagents live in `.claude/agents/`. Use them proactively:
+
+- **anthropic-fetch-reviewer** — after any change to API fetch calls or prompts in `src/Forge.jsx`
+- **forge-css-token-guardrail** — after any edit to `src/Forge.css`
+- **forge-jsx-monolith-sentry** — before adding significant logic to `src/Forge.jsx`
+- **plugin-skill-validator** — after editing any file under `forge-plugin/skills/`
+
 ## What NOT to do
 
 - Don't add Tailwind, CSS-in-JS, or any styling library — vanilla CSS with `--fg-*` custom properties is the convention.
