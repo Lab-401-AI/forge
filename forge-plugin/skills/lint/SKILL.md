@@ -61,9 +61,9 @@ This step checks for what shouldn't be there — stale references, dead links, b
 **5. Context budget**
 - Run `wc -w ./CLAUDE.md` to get word count.
 - Under 150 words: too sparse — Claude has too little to work with.
-- 150–600 words: ideal range.
-- 600–1000 words: getting long — flag sections that could be cut.
-- Over 1000 words: flag as actively harmful. A CLAUDE.md this large dilutes the signal. Claude reads all of it every turn — clutter costs you.
+- 150–1000 words: healthy range. No flag.
+- 1000–2000 words: flag as a budget concern (the severity rubric tiers this as Polish — diminishing returns to cut further unless the structure is wrong).
+- Over 2000 words: flag as a real problem (severity rubric tiers this as Important — Anthropic's hard adherence threshold).
 
 **6. Duplicate model ID references**
 - Grep `./CLAUDE.md` for model name strings (e.g., `claude-`).
@@ -137,6 +137,21 @@ You already have the project's stack from Step 1. Layer feedback that's specific
 
 Generic advice is failure. Every line of feedback should reference something concrete from the user's actual project.
 
+## Step 4b — Tier each finding and compute the verdict
+
+This is the step that gives the lint a stopping criterion. Without it, every run produces actionable-looking suggestions even when the file is healthy.
+
+1. `Read` `${CLAUDE_PLUGIN_ROOT}/schema/severity-rubric.md`. This defines four tiers (Critical, Important, Polish, Pass) and maps every check to a tier.
+2. For every finding accumulated in Steps 2 / 2b / 2c / 2d, look up its tier in the rubric's mapping table. Apply the escalation rule: a finding that crosses a hard threshold escalates one tier (e.g., file size of 2,100 words is Important, not Polish).
+3. Compute the verdict:
+   - Any Critical → **Action Needed (Critical)**
+   - No Critical, any Important → **Action Needed**
+   - No Critical, no Important (Polish-only or zero findings) → **Pass**
+4. For each Polish finding, estimate ROI per the rubric's ROI table — Strong (>300 tokens/turn), Moderate (100–300), Weak (<100). Drop Weak ROI findings from the output entirely unless every other tier is empty (i.e., don't fish for things to say).
+5. Carry the tier and ROI assignments into Step 5.
+
+**The Pass verdict is binding.** If the verdict is Pass, the output must explicitly tell the user not to keep running lint until they change something. Do not invent reasons to elevate Polish to Important to drive further action — the rubric is a contract.
+
 ## Step 5 — Output
 
 Write the report in this exact shape, in plain language:
@@ -144,45 +159,40 @@ Write the report in this exact shape, in plain language:
 ```
 # Forge Lint — <project name from package.json or directory>
 
-## TL;DR
-<One sentence: is the setup working for them or not. Be direct.>
+## Verdict
+<Pick exactly one and print it as the first thing under the heading:>
+
+— PASS ✅ — your setup is healthy. Don't run `/forge:lint` again until you change something. (Polish suggestions below are optional and have diminishing returns.)
+
+— ACTION NEEDED 🔴 — <N> Critical, <M> Important findings below. Fix the Critical ones first.
+
+— ACTION NEEDED ⚠️ — <M> Important findings below. No Critical issues.
+
+## Critical 🔴 (must fix — Claude will fail or behave wrong)
+<Skip this section entirely if no Critical findings.>
+- **<one-line headline>** — <plain-language explanation of what's wrong, why Claude will fail, and the exact fix. Paste-ready content where applicable.>
+
+## Important ⚠️ (worth fixing this session)
+<Skip this section entirely if no Important findings.>
+- **<one-line headline>** — <what's wrong, what it costs Claude in real terms, and the fix.>
+
+## Polish 🪞 (optional, diminishing returns)
+<Skip this section entirely if no Polish findings or if every Polish finding scored Weak ROI. When shown, lead each item with the ROI estimate so the user can decide whether to act.>
+- **<one-line headline>** — saves ~<N> tokens per turn, breaks even after ~<M> turns.
+  ROI: <Strong | Moderate>.
+  <One-line explanation and proposed change.>
 
 ## What's working ✓
-- <bulleted list of things they got right>
-
-## What needs work ⚠
-- **<section>** — <plain-language explanation of what's weak and why it matters for THEIR project. Quote a phrase from the canonical URL if you fetched one.>
-
-## What's missing ✗
-- **<section>** — <same structure>
-
-## What's noisy 🔇
-<Only include this section if noise checks in Step 2b found actual issues. Skip the section entirely if the file is clean.>
-- **Ghost agent: <name>** — mentioned in your setup file but the agent doesn't exist on disk. Claude will look for it and fail.
-- **Orphaned agent: <filename>** — exists in `.claude/agents/` but isn't mentioned anywhere. Claude won't know to use it.
-- **Stale path: `<path>`** — referenced in your setup file but doesn't exist on disk.
-- **Placeholder rot (line <N>):** "<phrase>" — this section was never finished.
-- **Context budget:** Your setup file is <N> words. <Specific advice on what to cut if over 600.>
-- **CLAUDE.local.md — <issue type>:** <plain-language explanation. For credential exposure, be direct about the risk.>
-
-## Agent quality 🎯
-<Skip this section entirely if .claude/agents/ is empty or all agents scored Strong. Only print findings.>
-- **`<agent-name>`** — <Strong | Acceptable | Weak | Will not trigger>. <If not Strong: which signals are missing, and a one-line proposed rewrite of the description that hits all four signals.>
-- <For each weak/dead-weight agent, name the failure pattern from the rubric if applicable: "buzzword sandwich", "job title", "truism", "novel".>
-
-## Restructure recommendation 🪜
-<Skip this section entirely if the path-routing trigger from Step 2d did not fire. Do not manufacture a recommendation.>
-- **What's bloating the root file:** <name the specific sections from the user's CLAUDE.md by heading and line range — e.g., "Conventions > Styling (lines 105–109)".>
-- **Where each section should move:** <subdirectory CLAUDE.md or `.claude/rules/<name>.md` with `paths:` frontmatter. Be specific about the path pattern.>
-- **Paste-ready new file:** <full content for the new file including frontmatter, ready to drop in.>
-- **Expected impact:** Root CLAUDE.md drops from <N> to ~<M> words. <One-sentence note on what Claude no longer carries during unrelated work.>
+- <Brief list of things they got right. Keep this even on Action Needed verdicts — affirmation is honest, not filler.>
 
 ## Suggested next step
-<One concrete action. Not "improve your CLAUDE.md." Something like: "Add a 'Commands' section with these three lines: ..." — give them the exact text to paste. If the biggest problem is noise, tell them exactly which line to delete and why.>
+<If verdict is Pass: "No action needed. Your setup is healthy. Don't run /forge:lint again until you change something — running it now will only produce Polish suggestions, which is the kind of feedback that erodes trust in tools.">
+<If verdict is Action Needed: lead with the highest-tier finding. Give exact paste-ready content. One concrete step, not a menu.>
 
 ---
 **How this lint was grounded:**
 - Bundled schema: ${CLAUDE_PLUGIN_ROOT}/schema/claude-md.md (read)
+- Severity rubric: ${CLAUDE_PLUGIN_ROOT}/schema/severity-rubric.md (verdict: <PASS | ACTION NEEDED>; <C> Critical, <I> Important, <P> Polish findings)
 - Noise checks: ghost agents, orphaned agents, stale paths, placeholder rot, context budget, CLAUDE.local.md
 - Agent description rubric: ${CLAUDE_PLUGIN_ROOT}/schema/agent-description-rubric.md (<applied to N agents | skipped — no agents on disk>)
 - Path-routing schema: ${CLAUDE_PLUGIN_ROOT}/schema/path-scoped-rules.md (<trigger fired | trigger did not fire>)
@@ -197,5 +207,6 @@ The "How this lint was grounded" footer is required. The user needs to know what
 - Speak to the user, not about them. "Your setup file doesn't have a commands section" not "the user's CLAUDE.md is missing..."
 - No jargon without context. First mention of "subagent" gets a half-sentence explanation; subsequent uses don't.
 - Lead with what the change *unlocks*, not what's wrong. "Adding a commands section means Claude stops guessing how to run your tests" beats "missing required section: commands."
-- For noise issues, be specific about the *cost* — "Claude reads your entire setup file every turn, so a 1200-word file full of stale notes is slowing down every response."
-- If the file is already good and clean, say so clearly. Don't manufacture problems to look thorough.
+- For noise issues, be specific about the *cost* — "Claude reads your entire setup file every turn, so a 1,200-word file full of stale notes is slowing down every response."
+- If the verdict is Pass, say it cleanly and stop. Polish items can appear under their section but the suggested next step is always "no action needed." Do not nudge the user to keep tightening a healthy file — that erodes trust in the tool.
+- Never elevate Polish to Important to drive action. The severity rubric is a contract; respect it.
