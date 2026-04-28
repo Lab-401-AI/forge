@@ -1,10 +1,11 @@
 # forge-plugin/ — CLI plugin half of Forge_
 
-The CLI plugin ships three skills the user can invoke from inside Claude Code:
+The CLI plugin ships four skills the user can invoke from inside Claude Code:
 
 - `skills/lint/` — audits a project's CLAUDE.md (`/forge:lint`)
 - `skills/analyze/` — generates tailored Claude Code setup recommendations (`/forge:analyze`)
 - `skills/consult/` — interactive Q&A grounded in the current project (`/forge:consult`)
+- `skills/audit/` — analyzes past session transcripts at `~/.claude/projects/` to surface wasted tokens, repeated questions, and patterns Claude got wrong (`/forge:audit`)
 
 When working on plugin behavior, edit the relevant `SKILL.md`. The plugin manifest is at `.claude-plugin/plugin.json`.
 
@@ -26,6 +27,6 @@ When working on plugin behavior, edit the relevant `SKILL.md`. The plugin manife
 
 ## What NOT to do
 
-- Don't add a fourth skill without revisiting whether the existing three already cover it.
+- Don't add a fifth skill without revisiting whether the existing four already cover it. The four-skill set (lint, analyze, consult, audit) was deliberate; expanding it past four needs the same kind of justification as adding the fourth.
 - Don't hardcode model IDs in skill bodies — skills should defer to whatever model Claude Code is running.
-- Don't fetch every canonical URL on every invocation. Cap at two fetches per skill run.
+- Don't fetch every canonical URL on every invocation. Cap at two fetches per skill run. `/forge:lint` may use both slots (one for grounding, one for the upgrade-opportunities scan); `/forge:audit` uses at most one.

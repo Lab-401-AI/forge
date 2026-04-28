@@ -128,6 +128,27 @@ In your `WebFetch` prompt, ask the small extractor model to surface specifically
 
 If `WebFetch` fails, say so in the output and proceed without Layer 2 — fall back to Layer 1 only.
 
+## Step 3b — Upgrade opportunities scan
+
+This step asks a different question from the rest of the lint: not *"is what's there correct?"* but *"is the user missing capabilities Claude Code now supports that their setup would benefit from?"* Static linters go stale; this step is what keeps the lint living.
+
+**Trigger.** Run this step only if **all** of these are true:
+- No Critical findings have accumulated in Steps 2 / 2b / 2c / 2d.
+- The user's CLAUDE.md exists and is non-skeletal (>150 words). A user with a missing or skeletal CLAUDE.md has bigger problems than missing features.
+- You have a fetch slot left. Total `WebFetch` calls in this lint run must not exceed two — Step 3 used one, this step uses the second.
+
+If any trigger condition fails, skip Step 3b entirely and proceed to Step 4. Do not invent upgrade opportunities from training memory — the whole point of this step is that it's grounded in a live fetch.
+
+**How to run it.**
+
+1. Pick the most relevant **Tier 1 or Tier 2** URL from `canonical-urls.md` that you did *not* fetch in Step 3, prioritizing pages that describe newer or commonly-underused capabilities. Good defaults: hooks, plugin marketplaces, subagents, settings/permissions.
+2. `WebFetch` that URL with a prompt that asks the extractor model: *"List the capabilities this page describes. For each, give a one-line description and the trigger condition under which a project would benefit from adopting it."*
+3. Compare the returned list against the user's actual setup (CLAUDE.md content from Step 1, `.claude/` directory contents from Step 1, settings files, agent files). For each capability the user is *not* using, decide whether their project actually warrants it. The bar: the trigger condition must match a concrete signal in their project.
+
+**Cap at three upgrade items.** A bigger list reads as a wishlist and erodes trust. Pick the three highest-leverage gaps and skip the rest. If the project warrants none, skip the section entirely — do not pad.
+
+**Upgrade opportunities are not findings.** They do not contribute to Critical/Important/Polish counts. They do not affect the verdict (a Pass with three upgrade opportunities is still a Pass — the user's *current* setup is healthy, and the upgrades are forward-looking suggestions). Carry them into Step 5 as their own output section.
+
 ## Step 4 — Personalize against the project (Layer 4)
 
 You already have the project's stack from Step 1. Layer feedback that's specific to *this* project:
@@ -182,6 +203,10 @@ Write the report in this exact shape, in plain language:
   ROI: <Strong | Moderate>.
   <One-line explanation and proposed change.>
 
+## Upgrades 🆙 (newer capabilities you're not using)
+<Skip this section entirely if Step 3b was skipped or returned no warranted upgrades. Up to three items. These are not findings and do not change the verdict — they're forward-looking suggestions tied to live docs.>
+- **<one-line headline>** — <plain-language description of the capability and which signal in *this* project triggered the suggestion. Paste-ready snippet where applicable.>
+
 ## What's working ✓
 - <Brief list of things they got right. Keep this even on Action Needed verdicts — affirmation is honest, not filler.>
 
@@ -196,7 +221,8 @@ Write the report in this exact shape, in plain language:
 - Noise checks: ghost agents, orphaned agents, stale paths, placeholder rot, context budget, CLAUDE.local.md
 - Agent description rubric: ${CLAUDE_PLUGIN_ROOT}/schema/agent-description-rubric.md (<applied to N agents | skipped — no agents on disk>)
 - Path-routing schema: ${CLAUDE_PLUGIN_ROOT}/schema/path-scoped-rules.md (<trigger fired | trigger did not fire>)
-- Live docs fetched: <URL or "none — fetch failed">
+- Live docs fetched: <one or two URLs, or "none — fetch failed">
+- Upgrade scan: <ran against URL X and surfaced N opportunities | skipped because <trigger condition that failed>>
 - Project files inspected: <list>
 ```
 
@@ -208,5 +234,5 @@ The "How this lint was grounded" footer is required. The user needs to know what
 - No jargon without context. First mention of "subagent" gets a half-sentence explanation; subsequent uses don't.
 - Lead with what the change *unlocks*, not what's wrong. "Adding a commands section means Claude stops guessing how to run your tests" beats "missing required section: commands."
 - For noise issues, be specific about the *cost* — "Claude reads your entire setup file every turn, so a 1,200-word file full of stale notes is slowing down every response."
-- If the verdict is Pass, say it cleanly and stop. Polish items can appear under their section but the suggested next step is always "no action needed." Do not nudge the user to keep tightening a healthy file — that erodes trust in the tool.
-- Never elevate Polish to Important to drive action. The severity rubric is a contract; respect it.
+- If the verdict is Pass, say it cleanly and stop. Polish and Upgrade items can still appear under their sections but the suggested next step is always "no action needed." Do not nudge the user to keep tightening a healthy file — that erodes trust in the tool.
+- Never elevate Polish or Upgrades to Important to drive action. The severity rubric is a contract; Upgrades are forward-looking suggestions, not findings — keep them in their own lane.
