@@ -1,0 +1,19 @@
+{
+  "name": "lab401",
+  "owner": {
+    "name": "Lab_401"
+  },
+  "description": "Plugins from Lab_401 — get more out of Claude Code without needing to be an expert.",
+  "plugins": [
+    {
+      "name": "forge",
+      "source": "./forge-plugin",
+      "description": "Audits your Claude Code setup, surfaces what's silently making Claude less effective on your project, and walks you through the fixes.",
+      "homepage": "https://forge.lab401.ai",
+      "repository": "https://github.com/lab-401-ai/forge",
+      "license": "MIT",
+      "keywords": ["claude-md", "setup", "audit", "agents", "consult", "lint"],
+      "category": "developer-tools"
+    }
+  ]
+}

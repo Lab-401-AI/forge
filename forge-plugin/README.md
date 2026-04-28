@@ -88,11 +88,12 @@ Loads the plugin for the duration of one session. Useful for testing changes wit
 
 ### Permanent
 
-Once published to a marketplace:
-
 ```bash
-claude plugin install forge@<marketplace-name>
+/plugin marketplace add lab-401-ai/forge
+/plugin install forge@lab401
 ```
+
+Run from inside Claude Code. Updates flow when Lab_401 ships a new version — refresh with `/plugin marketplace update lab401`.
 
 ## How Forge knows what "good" looks like
 
