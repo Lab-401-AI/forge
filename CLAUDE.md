@@ -1,136 +1,74 @@
-# CLAUDE.md — Forge_
+# CLAUDE.md — Forge_ (CLI plugin repo)
 
-## What Forge_ is
+## What this repo is
 
-Forge_ helps anyone using Claude Code get more out of it — without needing to know what they're doing. It guides you through the setup, analyzes your project, and tells you what to add or change so your AI actually works the way you intended.
+This is the public repository for the Forge_ Claude Code plugin. It ships through the Lab_401 marketplace and adds four commands to Claude Code: `/forge:lint`, `/forge:analyze`, `/forge:consult`, `/forge:audit`.
 
-The core promise: **you have the vision, Forge_ makes sure your AI delivers it.**
+User-facing docs are in [`README.md`](./README.md). Path-scoped editing conventions for the plugin live in [`forge-plugin/CLAUDE.md`](./forge-plugin/CLAUDE.md) and load only when Claude works inside `forge-plugin/`.
 
-The people using this aren't necessarily engineers. They might be designers, founders, marketers, or hobbyists who picked up Claude Code and are figuring it out as they go. The app should never make them feel like they're missing context.
+The companion web app (`lab-401-ai/forge-web`) is in a separate repo. They share a brand but ship independently — don't conflate the two.
 
-## Two products, one brand
+## Audience
 
-Forge_ is becoming two complementary tools that serve the same user at different moments:
+The people using the plugin aren't necessarily seasoned engineers. They might be designers, founders, marketers, or hobbyists who picked up Claude Code and are figuring it out as they go. Plugin output should never make them feel like they're missing context.
 
-**The web app** (what's built) — forge.lab401.ai. You open it in a browser, describe what you're building, and Forge analyzes your project and gives you personalized recommendations. It's where you go to set things up, understand your options, and get a starting point. Visual, guided, and approachable.
+## Tone for plugin output
 
-**The CLI plugin** (what's next) — lives inside Claude Code itself. Once you're working on a project, you call `/forge:lint` or `/forge:consult` without ever leaving the terminal. It reads your actual project files and tells you what's off, what's missing, and what to do next. No browser, no copy-pasting.
-
-These aren't competing products. The web app is for getting started. The plugin is for staying sharp as the project grows.
-
-## Where Forge wins (the actual wedge)
-
-Several tools already lint or scaffold CLAUDE.md files. Forge's defensible ground is the combination of things none of them do:
-
-- **CLAUDE.local.md curation** — the personal, uncommitted layer of Claude Code setup. Nobody handles this. It's where user-specific tokens, notes, and machine paths should live, and there's no guidance for it anywhere.
-- **Codebase-aware suggestions** — not templates. Forge scans what you've actually built and says "given your stack, here are the 4 agents that would save you the most time." That's a different class of recommendation.
-- **Conversational refinement** — other tools return pass/fail. Forge walks you through it. Explaining why something matters before telling you to change it.
-- **Living rules** — Claude Code updates frequently. Forge's recommendations should pull from current documentation, not hardcoded rules that go stale.
-
-## Current state
-
-The web app is roughly 70% complete. The core flow works. The next phase is structural cleanup and the beginning of the plugin work.
-
-### What exists now
-- Single-page React app with three-panel layout: sidebar nav, main content, AI chat
-- 10 sidebar sections covering setup steps, reference material, and project analysis
-- Interactive 9-step initialization checklist (persisted across sessions)
-- Project analysis: describe your project or upload files → Claude generates tailored recommendations per section
-- AI chat panel powered by Anthropic API for real-time Q&A
-- Ember orange accent color (#e0663c), dark theme, monospace typography
-
-### What needs to change
-- **Separate guide content from personalized recommendations.** Right now they're mixed together in a way that's hard to scan. Best practices should feel like reference material; your specific recommendations should feel like a personal briefing.
-- **Simplify navigation.** 10 flat sidebar items is too many. Group or layer them so the user always knows where they are and what's next.
-- **Progressive flow for new users.** Someone opening Forge for the first time should feel guided. A returning user should be able to jump straight to what they need.
-
-## Tone and communication
-
-When Forge talks to users — in the UI, in recommendations, in the chat — it should sound like a knowledgeable friend explaining something over coffee, not a developer writing documentation.
+When Forge talks to users — in skill output, recommendations, footers — it should sound like a knowledgeable friend explaining something over coffee, not a developer writing documentation.
 
 - Use plain words. "Your setup file" not "your CLAUDE.md." "AI assistant" not "LLM." Introduce jargon only when necessary, and explain it when you do.
-- Lead with what it means for the user, not what the thing is. "This tells Claude how to behave in your project" before "this is the CLAUDE.md file."
+- Lead with what something means for the user before naming the thing.
 - Keep it short. If something can be said in one sentence, don't use three.
-- Never assume the user knows what something is just because it's obvious to a developer.
 
-## Tech stack
+## Repo layout
 
-- **Framework:** React 18 (no router — single-page app)
-- **Build tool:** Vite 6 (ESM-only, `"type": "module"`)
-- **Language:** JavaScript (JSX) — no TypeScript
-- **Styling:** Plain CSS with custom properties prefixed `--fg-*`
-- **AI:** Anthropic API via direct browser access (`anthropic-dangerous-direct-browser-access` header)
-- **State:** React hooks + localStorage for persistence (checklist, project description, recommendations)
-- **Node:** >=20
+```
+.claude-plugin/
+  marketplace.json         # Lab_401 marketplace manifest
+forge-plugin/              # the plugin itself
+  .claude-plugin/plugin.json
+  skills/                  # /forge:lint, /forge:analyze, /forge:consult, /forge:audit
+  schema/                  # bundled grounding rules
+  CLAUDE.md                # path-scoped editing conventions
+.claude/
+  agents/plugin-skill-validator.md
+README.md                  # user-facing storefront
+LICENSE                    # MIT
+```
 
-## Commands
+## Commands (for working on this repo)
+
+There's no build step. The plugin is loaded directly from disk:
 
 ```bash
-npm run dev        # Start dev server
-npm run build      # Production build → dist/
-npm run preview    # Preview production build
+claude --plugin-dir "$(pwd)/forge-plugin"
 ```
-
-## Project structure
-
-```
-src/
-  main.jsx         # Entry point — renders Forge into #root
-  Forge.jsx        # Entire app (~950 lines, single component + helpers)
-  Forge.css        # All styles (~980 lines)
-public/            # Static assets
-.env               # VITE_ANTHROPIC_API_KEY (gitignored)
-```
-
-Key prompt locations inside `src/Forge.jsx` (do not move without updating references in plugin skills):
-- `ANALYSIS_PROMPT` — lines 29–46. Drives the project analysis API call; defines the JSON shape the app expects back.
-- `MODES` object — lines 48–115. Three system prompts: `claude-code` (expert consult), `architect` (design review), `rubber-duck` (thinking partner). The consult skill pulls from `claude-code`.
-
-## What this repo also contains
-
-The `forge-plugin/` directory is the CLI plugin half of Forge_, with its own conventions in `forge-plugin/CLAUDE.md` (loaded on demand when Claude works on plugin files). The web app's per-directory conventions live in `src/CLAUDE.md`.
 
 ## Agents
 
-Four specialized subagents live in `.claude/agents/`. Use them proactively:
+One subagent in `.claude/agents/`:
 
-- **anthropic-fetch-reviewer** — after any change to API fetch calls or prompts in `src/Forge.jsx`
-- **forge-css-token-guardrail** — after any edit to `src/Forge.css`
-- **forge-jsx-monolith-sentry** — before adding significant logic to `src/Forge.jsx`
-- **plugin-skill-validator** — after editing any file under `forge-plugin/skills/`
+- **plugin-skill-validator** — run after editing any file under `forge-plugin/skills/`. Checks SKILL.md frontmatter, body structure, and tool references.
 
 ## What NOT to do
 
-- Don't add Tailwind, CSS-in-JS, or any styling library — vanilla CSS with `--fg-*` custom properties is the convention.
-- Don't migrate to TypeScript without asking. The project is intentionally JS.
-- Don't refactor `src/Forge.jsx` into smaller components as part of an unrelated task. It's a known ~950-line monolith and breaking it up is its own scoped piece of work.
-- Don't hardcode the Anthropic model ID in new code without checking the current one (currently `claude-sonnet-4-6`).
-- Don't conflate the web app and the plugin. They share a repo but ship independently — changes to `src/` don't touch `forge-plugin/` and vice versa.
-
-## Conventions
-
-Per-directory conventions (styling, component patterns) live in `src/CLAUDE.md` and load only when Claude works in `src/`. Plugin conventions live in `forge-plugin/CLAUDE.md`. The cross-cutting rule below applies project-wide.
-
-### API calls
-- All Anthropic API calls use `import.meta.env.VITE_ANTHROPIC_API_KEY`
-- Two API integration points: project analysis (structured JSON response) and chat (conversational)
-- Model: `claude-sonnet-4-6` for both
-- **Model drift risk:** both call sites must stay in sync. If you update the model string in one place, grep for the other before committing. The `anthropic-fetch-reviewer` subagent checks this automatically.
-
-## Design principles
-
-- **Clarity over cleverness.** Every screen should be immediately scannable. No hidden menus, no mystery icons.
-- **Guide first, reference second.** New users follow a path. Experienced users browse freely. Both work without friction.
-- **Personalization earns trust.** Recommendations should feel specific and useful, never generic. If the analysis can't add real value to a section, show nothing rather than filler.
-- **Meet the user where they are.** The target user may not know what an agent, a hook, or a subagent is. That's fine. Forge explains it in context, without condescending.
+- Don't hardcode model IDs in skills — defer to whatever model Claude Code is running.
+- Don't add a fifth skill without revisiting whether the existing four already cover it. The four-skill set was deliberate.
+- Don't add files to this repo that aren't plugin-essential. Web-app material belongs in `lab-401-ai/forge-web`.
 
 ## Deployment
 
-- **Parent site:** lab401.ai (separate repo: lab401-web)
-- **Apps page tile** on lab401.ai links to Forge_ at `https://forge.lab401.ai`
-- **Pipeline:** S3 + CloudFront, mirroring lab401-web
+The plugin publishes through the Lab_401 marketplace declared in `.claude-plugin/marketplace.json`. End users install with:
+
+```
+/plugin marketplace add lab-401-ai/forge
+/plugin install forge@lab401
+```
+
+When `forge-plugin/.claude-plugin/plugin.json` version bumps and the change lands on `main`, marketplace consumers pick it up via `/plugin marketplace update lab401`.
 
 ## Related
 
-- **lab401-web repo:** Contains the Apps page tile and GuideCover animation for Forge_
+- **`lab-401-ai/forge-web`** — the companion web app (private repo, deploys to forge.lab401.ai)
+- **`lab401-web`** — parent site repo
 - **Brand:** Lab_401 — AI software development company
