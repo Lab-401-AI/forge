@@ -1,3 +1,8 @@
+# How to install directly in your CLI
+
+/plugin marketplace add lab-401-ai/forge
+/plugin install forge@lab401
+
 # Forge_ Plugin
 
 Get more out of Claude Code without needing to be an expert. Forge audits your setup, surfaces what's silently making Claude less effective on your project, and walks you through the fixes — all without leaving the terminal.
