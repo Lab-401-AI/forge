@@ -61,8 +61,9 @@ One subagent in `.claude/agents/`:
 The plugin publishes through the Lab_401 marketplace declared in `.claude-plugin/marketplace.json`. End users install with:
 
 ```
-/plugin marketplace add lab-401-ai/forge
+/plugin marketplace add jkalajian313/forge
 /plugin install forge@lab401
+/plugin enable forge@lab401
 ```
 
 When `forge-plugin/.claude-plugin/plugin.json` version bumps and the change lands on `main`, marketplace consumers pick it up via `/plugin marketplace update lab401`.

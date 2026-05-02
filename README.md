@@ -95,11 +95,12 @@ Loads the plugin for the duration of one session. Useful for testing changes wit
 ### Permanent
 
 ```bash
-/plugin marketplace add lab-401-ai/forge
+/plugin marketplace add jkalajian313/forge
 /plugin install forge@lab401
+/plugin enable forge@lab401
 ```
 
-Run from inside Claude Code. Updates flow when Lab_401 ships a new version — refresh with `/plugin marketplace update lab401`.
+Run from inside Claude Code. The `enable` step is required — third-party plugins ship disabled by default, so commands won't register until you enable. Updates flow when Lab_401 ships a new version — refresh with `/plugin marketplace update lab401`.
 
 ## How Forge knows what "good" looks like
 
