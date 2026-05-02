@@ -1,8 +1,10 @@
 # How to install directly in your CLI
 
-/plugin marketplace add lab-401-ai/forge
-
+```
+/plugin marketplace add jkalajian313/forge
 /plugin install forge@lab401
+/plugin enable forge@lab401
+```
 
 # Forge_ Plugin
 
